@@ -1,0 +1,40 @@
+{
+	"name": "cloco-task-backend",
+	"version": "0.0.1",
+	"description": "Backend Application for Cloco Task",
+	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Razeev-Shrestha/cloco-task-backend.git"
+	},
+	"scripts": {
+		"prepare": "bun .husky/install.mjs",
+		"dev": "bun --watch src/index.ts"
+	},
+	"keywords": ["Bun", "Typescript", "Elysia.JS", "PostgreSQL"],
+	"author": {
+		"name": "Rajeev Shrestha",
+		"email": "mail@rajeevshrestha.info.np",
+		"url": "https://rajeevshrestha.info.np"
+	},
+	"license": "MIT",
+	"homepage": "https://github.com/Razeev-Shrestha/cloco-task-backend#readme",
+	"dependencies": {
+		"@bogeychan/elysia-logger": "^0.1.7",
+		"elysia": "^1.2.10",
+		"pino-pretty": "^13.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@commitlint/cli": "^19.6.1",
+		"@commitlint/config-conventional": "^19.6.0",
+		"@commitlint/types": "^19.5.0",
+		"@types/bun": "^1.1.16",
+		"@types/lint-staged": "^13.3.0",
+		"cspell": "^8.17.2",
+		"husky": "^9.1.7",
+		"lint-staged": "^15.3.0",
+		"typescript": "^5.7.3"
+	},
+	"trustedDependencies": ["@biomejs/biome"]
+}

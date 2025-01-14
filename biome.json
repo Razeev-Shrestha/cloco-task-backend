@@ -1,0 +1,125 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"complexity": {
+				"noBannedTypes": "error",
+				"noEmptyTypeParameters": "error",
+				"noExtraBooleanCast": "error",
+				"noForEach": "info",
+				"noMultipleSpacesInRegularExpressionLiterals": "warn",
+				"noUselessCatch": "warn",
+				"noUselessEmptyExport": "error",
+				"noUselessLabel": "error",
+				"noUselessTernary": "warn",
+				"noUselessTypeConstraint": "warn",
+				"useArrowFunction": "warn",
+				"useFlatMap": "error",
+				"useLiteralKeys": "warn",
+				"useOptionalChain": "warn",
+				"useRegexLiterals": "warn",
+				"useSimplifiedLogicExpression": "warn"
+			},
+			"correctness": {
+				"noConstAssign": "error",
+				"noUnnecessaryContinue": "warn",
+				"noUnreachable": "error",
+				"noUnusedImports": "error",
+				"noUnusedLabels": "error",
+				"useIsNan": "error",
+				"useExhaustiveDependencies": "warn"
+			},
+			"performance": {
+				"noBarrelFile": "error",
+				"noReExportAll": "error"
+			},
+			"security": {
+				"noGlobalEval": "error"
+			},
+			"style": {
+				"noUselessElse": "error",
+				"noVar": "error",
+				"useConsistentArrayType": "warn",
+				"useConst": "warn",
+				"noDefaultExport": {
+					"level": "error"
+				},
+				"useExportType": "error",
+				"useImportType": "error",
+				"useSelfClosingElements": "error",
+				"useShorthandArrayType": "warn",
+				"useShorthandAssign": "warn",
+				"useTemplate": "error",
+				"useFilenamingConvention": {
+					"level": "error",
+					"options": {
+						"strictCase": true,
+						"requireAscii": true,
+						"filenameCases": ["camelCase", "kebab-case"]
+					}
+				}
+			},
+			"suspicious": {
+				"noConsoleLog": "warn",
+				"noConstEnum": "error",
+				"noDoubleEquals": "error",
+				"noDuplicateCase": "error",
+				"noDuplicateJsxProps": "warn",
+				"noExplicitAny": "warn",
+				"noGlobalIsFinite": "error",
+				"noGlobalIsNan": "error",
+				"useIsArray": "error",
+				"useValidTypeof": "error"
+			}
+		}
+	},
+	"formatter": {
+		"enabled": true,
+		"attributePosition": "auto",
+		"formatWithErrors": false,
+		"ignore": ["node_modules/**", "build/**"],
+		"indentStyle": "tab",
+		"indentWidth": 3,
+		"lineEnding": "lf",
+		"lineWidth": 100
+	},
+	"files": {
+		"ignore": ["node_modules/**", "build/**"]
+	},
+	"javascript": {
+		"formatter": {
+			"enabled": true,
+			"arrowParentheses": "asNeeded",
+			"attributePosition": "auto",
+			"bracketSameLine": true,
+			"bracketSpacing": true,
+			"indentStyle": "tab",
+			"indentWidth": 3,
+			"jsxQuoteStyle": "single",
+			"lineEnding": "lf",
+			"lineWidth": 100,
+			"quoteProperties": "asNeeded",
+			"quoteStyle": "single",
+			"semicolons": "asNeeded",
+			"trailingCommas": "es5"
+		}
+	},
+	"json": {
+		"formatter": {
+			"enabled": true,
+			"indentWidth": 3,
+			"indentStyle": "tab",
+			"lineEnding": "lf",
+			"lineWidth": 100,
+			"trailingCommas": "none"
+		},
+		"linter": {
+			"enabled": true
+		}
+	}
+}
