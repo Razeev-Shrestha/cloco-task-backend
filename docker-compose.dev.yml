@@ -1,0 +1,14 @@
+services:
+   database:
+      image: postgres:16.6
+      environment:
+         POSTGRES_DB: ${POSTGRES_DB}
+         POSTGRES_USER: ${POSTGRES_USER}
+         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ports:
+        - "${POSTGRES_PORT}:5432"
+      volumes:
+        - postgres_data:/var/lig/postgresql/data
+
+volumes:
+   postgres_data:

@@ -12,5 +12,15 @@
 		".idea",
 		"build"
 	],
-	"words": ["bogeychan", "cloco", "Elysia", "Rajeev", "Shrestha"]
+	"words": [
+		"bogeychan",
+		"cloco",
+		"commitlint",
+		"Elysia",
+		"elysiajs",
+		"Rajeev",
+		"Shrestha",
+		"TIMESTAMPZ",
+		"typebox"
+	]
 }
