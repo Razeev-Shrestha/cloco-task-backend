@@ -8,10 +8,10 @@ export const usersSchema = t.Object(
 		email: t.String({ format: 'email', description: 'Email of the user' }),
 		password: t.String({ minLength: 6, maxLength: 255, description: 'Password of the user' }),
 		phone: t.String({ minLength: 10, maxLength: 10, description: 'Phone number of the user' }),
-		dob: t.String({ format: 'date', description: 'Date of birth of the user' }),
+		dob: t.String({ description: 'Date of birth of the user' }),
 		gender: t.Union([t.Literal('male'), t.Literal('female'), t.Literal('others')]),
 		role_type: t.Union([
-			t.Literal('super_Admin'),
+			t.Literal('super_admin'),
 			t.Literal('artist_manager'),
 			t.Literal('artist'),
 		]),

@@ -13,6 +13,10 @@ export type Derive = SingletonBase['derive'] & {
 	log: Logger
 	query: DbQuery
 	readonly bearer: string | undefined
+	user: {
+		email: string
+		role_type: string
+	}
 }
 
 export type AppContext<
@@ -34,6 +38,10 @@ export type AppContext<
 			log: Logger
 			query: DbQuery
 			bearer: string | undefined
+			user: {
+				email: string
+				role_type: string
+			}
 		}
 	},
 	Path

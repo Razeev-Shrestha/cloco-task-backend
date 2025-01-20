@@ -4,8 +4,8 @@ import { selectFromTable, withPaginationSelectFromTable } from '@/utils/select-f
 import { updateIntoTable } from '@/utils/update-into-table'
 import type { UserSchema } from './users.schema'
 
-export const getAllUsers = async () => {
-	return withPaginationSelectFromTable('users')
+export const getAllUsers = async ({ page = 1, limit = 10 }: { page?: number; limit?: number }) => {
+	return withPaginationSelectFromTable<UserSchema>('users', limit, page)
 }
 
 export const getUser = async (input: Partial<UserSchema>) => {

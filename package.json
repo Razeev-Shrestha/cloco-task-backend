@@ -8,7 +8,7 @@
 		"url": "git+https://github.com/Razeev-Shrestha/cloco-task-backend.git"
 	},
 	"scripts": {
-		"prepare": "bun .husky/install.mjs",
+		"prepare": "bun .husky/install.mjs || true",
 		"dev": "bun --env-file=.env.development --watch src/index.ts",
 		"build": "bun --env-file=.env.production builder.ts",
 		"start": "NODE_ENV=production bun build/src/index.js"

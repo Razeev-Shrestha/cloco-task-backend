@@ -1,4 +1,29 @@
 services:
+   app:
+      build:
+         context: .
+         dockerfile: Dockerfile.dev
+      ports:
+         - "${PORT}:${PORT}"
+      environment:
+         - CI=true
+      develop:
+        watch:
+         - action: sync
+           path: ./src
+           target: /app/src
+           ignore:
+             - .git/
+             - node_modules/
+             - .vscode/
+             - .idea/
+             - .husky/
+         - action: rebuild
+           path: package.json
+         - action: rebuild
+           path: .env.development
+      depends_on:
+         - database
    database:
       image: postgres:16.6
       environment:
@@ -12,3 +37,6 @@ services:
 
 volumes:
    postgres_data:
+
+networks:
+  cloco-network:

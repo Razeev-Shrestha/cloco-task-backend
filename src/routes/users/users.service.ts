@@ -1,6 +1,7 @@
 import type { AppContext } from '@/app.type'
 import { internalServerErrorResponse } from '@/utils/error-response'
 import { generatePassword } from '@/utils/generate-password'
+import { omit } from '@/utils/omit'
 import { hashPassword } from '@/utils/password'
 import { response } from '@/utils/response'
 import { createUser, deleteUser, getAllUsers, getUser, updateUser } from './users.controller'
@@ -12,7 +13,7 @@ export const getUserService = async ({ log, set, params }: GetUserByIdHandler) =
 	try {
 		const user = await getUser({ id: params.id })
 
-		if (user.rows.length === 0) {
+		if (user.rows.length === 0 || !user.rows[0]) {
 			set.status === 'Not Found'
 			return response({ success: false, message: 'User not found.', status: 400, errors: null })
 		}
@@ -22,7 +23,7 @@ export const getUserService = async ({ log, set, params }: GetUserByIdHandler) =
 			success: true,
 			message: 'User fetched Successfully',
 			status: 200,
-			payload: user,
+			payload: omit(user.rows[0], ['password', 'created_at', 'updated_at']),
 		})
 	} catch (error) {
 		log.error(error)
@@ -38,7 +39,7 @@ export const createUserService = async ({ log, body, set }: CreateUserHandler) =
 	try {
 		const user = await getUser({ email: body.email })
 
-		if (user.rowCount === 0) {
+		if (user.rowCount !== 0) {
 			set.status = 'Conflict'
 			return response({
 				success: false,
@@ -54,12 +55,17 @@ export const createUserService = async ({ log, body, set }: CreateUserHandler) =
 
 		const newUser = await createUser({ ...body, password: hashedPassword as string })
 
+		if (newUser.rowCount === 0 || !newUser.rows[0]) {
+			set.status = 'Internal Server Error'
+			return internalServerErrorResponse
+		}
+
 		set.status = 'Created'
 		return response({
 			success: true,
 			message: 'User created successfully',
 			status: 201,
-			payload: newUser,
+			payload: omit(newUser.rows[0], ['password', 'created_at', 'updated_at']),
 		})
 	} catch (err) {
 		log.error(err)
@@ -87,14 +93,22 @@ export const updateUserService = async ({ body, params, set, log }: UpdateUserHa
 			})
 		}
 
-		const updatedUser = await updateUser(params.id, body)
+		const updatedUser = await updateUser(params.id, {
+			...body,
+			updated_at: new Date().toISOString(),
+		})
+
+		if (updatedUser.rowCount === 0 || !updatedUser.rows[0]) {
+			set.status = 'Internal Server Error'
+			return internalServerErrorResponse
+		}
 
 		set.status = 'OK'
 		return response({
 			success: true,
 			message: 'User updated successfully',
 			status: 200,
-			payload: updatedUser,
+			payload: omit(updatedUser.rows[0], ['password', 'created_at', 'updated_at']),
 		})
 	} catch (err) {
 		log.error(err)
@@ -135,18 +149,26 @@ export const deleteUserService = async ({ params, set, log }: DeleteUserHandler)
 	}
 }
 
-type GetUsersHandler = AppContext<{ body: unknown }, '/api/v1/users'>
+type GetUsersHandler = AppContext<
+	{ body: unknown; query: { page?: number; limit?: number } },
+	'/api/v1/users'
+>
 
-export const getUsersService = async ({ log, set }: GetUsersHandler) => {
+export const getUsersService = async ({ log, set, query }: GetUsersHandler) => {
 	try {
-		const users = await getAllUsers()
+		const users = await getAllUsers(query)
 
 		set.status = 'OK'
 		return response({
 			success: true,
 			message: 'Users fetched successfully',
 			status: 200,
-			payload: users,
+			payload: users.data.map(user => omit(user, ['password', 'created_at', 'updated_at'])),
+			pagination: {
+				count: users.count,
+				hasNext: users.hasNext,
+				page: users.page,
+			},
 		})
 	} catch (err) {
 		log.error(err)

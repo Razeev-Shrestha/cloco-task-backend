@@ -7,4 +7,4 @@ export const client = new Client({
 
 export type DbQuery = typeof client.query
 
-export const query = client.query.bind(client) as DbQuery
+export const query = client.query

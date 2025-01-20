@@ -1,17 +1,16 @@
 import type { Prettify } from '@/types/prettify'
 
-type SuccessResponse<T> = {
-	success: true
-	status: number
-	message: string
-	payload: T
-}
-
 type ErrorResponse<T> = {
 	success: false
 	status: number
 	message: string
 	errors?: T
+}
+
+type PaginationType = {
+	count: number
+	hasNext: boolean
+	page: number
 }
 
 type IResponse<T> = SuccessResponse<T> | ErrorResponse<T>
@@ -20,5 +19,22 @@ type ResponseReturnType<T> = Prettify<
 	T extends { success: true; payload: infer P } ? SuccessResponse<P> : ErrorResponse<T>
 >
 
-export const response = <T extends IResponse<unknown>>(res: T): ResponseReturnType<T> =>
-	res as unknown as ResponseReturnType<T>
+type SuccessResponse<T> = {
+	success: true
+	status: number
+	message: string
+	payload: T
+	pagination?: PaginationType
+}
+
+export const response = <T extends IResponse<unknown>>(
+	res: T,
+	paginationData?: PaginationType
+): ResponseReturnType<T> => {
+	if (!paginationData) return res as unknown as ResponseReturnType<T>
+
+	return {
+		...res,
+		pagination: paginationData,
+	} as unknown as ResponseReturnType<T>
+}
