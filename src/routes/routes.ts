@@ -1,6 +1,7 @@
 import type { Decorator, Derive, Resolve, Store } from '@/app.type'
 import { authPlugin } from '@/plugins/auth.plugin'
 import { makeSchemaOptional } from '@/utils/make-schema-optional'
+import { mergeSchemas } from '@/utils/merge-schema'
 import { response } from '@/utils/response'
 import Elysia, { t } from 'elysia'
 import { artistsSchema } from './artists/artists.schema'
@@ -13,6 +14,8 @@ import {
 } from './artists/artists.service'
 import { authLoginSchema } from './auth/auth.schema'
 import { authLoginService, authMeService, authRegisterService } from './auth/auth.service'
+import { downloadCsvService } from './download/download.service'
+import { songsSchema } from './songs/songs.schema'
 import {
 	createSongService,
 	deleteSongService,
@@ -28,8 +31,6 @@ import {
 	getUsersService,
 	updateUserService,
 } from './users/users.service'
-import { mergeSchemas } from '@/utils/merge-schema'
-import { songsSchema } from './songs/songs.schema'
 
 export const routes = new Elysia<
 	'/api/v1',
@@ -246,3 +247,20 @@ export const routes = new Elysia<
 				authorizedRoles: ['artist'],
 			})
 	)
+	.use(authPlugin)
+	.get('/download', downloadCsvService, {
+		tags: ['General'],
+		detail: {
+			tags: ['General'],
+			summary: 'Download CSV',
+			description: 'Download CSV',
+		},
+		authorizedRoles: ['artist_manager'],
+		afterHandle: ({ set }) => {
+			set.headers = {
+				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+				'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+			}
+		},
+	})

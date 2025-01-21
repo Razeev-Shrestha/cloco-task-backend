@@ -40,7 +40,6 @@ export const errorHandlerPlugin = new Elysia().onError({ as: 'global' }, ({ code
 			})
 		}
 		default:
-			logger.info('Error code not found')
 			set.status = 'Internal Server Error'
 			logger.error(error)
 

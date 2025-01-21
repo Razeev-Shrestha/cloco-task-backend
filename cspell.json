@@ -18,9 +18,11 @@
 		"commitlint",
 		"Elysia",
 		"elysiajs",
+		"papaparse",
 		"Rajeev",
 		"Shrestha",
 		"TIMESTAMPZ",
-		"typebox"
+		"typebox",
+		"unparse"
 	]
 }
