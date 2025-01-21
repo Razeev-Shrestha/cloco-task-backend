@@ -59,6 +59,7 @@ export const authLoginService = async ({ body, log, set, jwt }: AuthLoginHandler
 
 		const accessToken = await jwt.sign({
 			email: user.rows[0]?.email as string,
+			id: user.rows[0]?.id as number,
 			role_type: user.rows[0]?.role_type as string,
 			iat: Math.floor(Date.now() / 1000),
 			exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24,

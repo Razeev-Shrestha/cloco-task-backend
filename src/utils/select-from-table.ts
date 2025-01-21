@@ -28,41 +28,38 @@ export const withPaginationSelectFromTable = async <
 	table: string,
 	limit = 10,
 	page = 1,
-	condition: Partial<Record<keyof T, unknown>> = {},
 	select?: Partial<S>
 ): Promise<{
 	data: T[]
 	count: number
+	total: number
 	hasNext: boolean
 	page: number
+	limit: number
 }> => {
 	const offset = (Number(page) - 1) * limit
 	let totalRows: number
 	let data: T
-	const keys = Object.keys(condition)
-	const values = Object.values(condition)
 
 	const countQuery = `SELECT COUNT(*) AS total FROM ${table}`
 	const totalResult = await client.query<{ total: string }>(countQuery)
 	//@ts-ignore
 	const totalCount = Number.parseInt(totalResult?.rows[0].total, 10)
 
-	const whereClauses = keys.map((key, index) => `${key}=$${index + 1}`).join(' AND ')
-
 	const query =
 		Number(limit) === -1
-			? `SELECT ${select ? Object.keys(select).join(',') : '*'} FROM ${table} WHERE ${whereClauses}`
-			: `SELECT ${select ? Object.keys(select).join(',') : '*'} FROM ${table} LIMIT $1 OFFSET $2 WHERE ${whereClauses}`
+			? `SELECT ${select ? Object.keys(select).join(',') : '*'} FROM ${table} ORDER BY id DESC`
+			: `SELECT ${select ? Object.keys(select).join(',') : '*'} FROM ${table} ORDER BY id DESC LIMIT $1 OFFSET $2`
 
 	if (Number(limit) === -1) {
-		const result = await client.query(query, values)
+		const result = await client.query(query)
 		if (!result.rowCount) {
 			throw new Error('No data found')
 		}
 		totalRows = result.rowCount
 		data = result.rows as unknown as T
 	} else {
-		const result = await client.query(query, [limit, offset, ...values])
+		const result = await client.query(query, [limit, offset])
 
 		if (!result.rowCount) {
 			throw new Error('No data found')
@@ -75,8 +72,10 @@ export const withPaginationSelectFromTable = async <
 
 	return {
 		data: data as unknown as T[],
+		total: totalCount,
 		count: totalRows,
 		hasNext,
+		limit: Number(limit),
 		page: Number(page),
 	}
 }

@@ -14,5 +14,7 @@ export const insertIntoTable = async <T extends Record<string, unknown>>(
 
 	const query = `INSERT INTO ${table} (${columns}) VALUES (${placeholders}) RETURNING *`
 
+	console.log(query, values)
+
 	return client.query<T>(query, values)
 }

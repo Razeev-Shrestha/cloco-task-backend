@@ -5,27 +5,28 @@ import { pick } from '@/utils/pick'
 import { response } from '@/utils/response'
 import { createUser, getUser, updateUser } from '../users/users.controller'
 import type { UserSchema } from '../users/users.schema'
-import {
-	createArtist,
-	deleteArtist,
-	getAllArtists,
-	getArtist,
-	updateArtist,
-} from './artists.controller'
+import { createArtist, deleteArtist, getArtist, updateArtist } from './artists.controller'
 import type { ArtistsSchema } from './artists.schema'
+import { client } from '@/db/client'
+import { hashPassword } from '@/utils/password'
 
 type GetArtistHandler = AppContext<{ params: { id: number } }, '/api/v1/artists/:id'>
 
 export const getArtistService = async ({ params, log, set }: GetArtistHandler) => {
 	try {
-		const artist = await getArtist({ id: params.id })
+		const artist = await client.query(
+			`
+			SELECT a.first_release_year,a.no_of_albums_released,u.id,u.email,u.first_name,u.last_name,u.gender,u.role_type FROM artists a LEFT JOIN users u ON a.user_id = u.id WHERE a.user_id = $1
+			`,
+			[params.id]
+		)
 
 		if (artist.rowCount === 0) {
 			set.status = 'Bad Request'
 			return response({ message: 'Artist not found', status: 400, success: false })
 		}
 		return response({
-			payload: artist.rows,
+			payload: artist.rows[0],
 			status: 200,
 			success: true,
 			message: 'Artist fetched successfully',
@@ -37,22 +38,53 @@ export const getArtistService = async ({ params, log, set }: GetArtistHandler) =
 	}
 }
 
-type GetArtistsHandler = AppContext<
-	{ params: { limit?: number; page?: number } },
-	'/api/v1/artists'
->
+type GetArtistsHandler = AppContext<{ query: { limit?: number; page?: number } }, '/api/v1/artists'>
 
-export const getArtistsService = async ({ log, set, params }: GetArtistsHandler) => {
+export const getArtistsService = async ({
+	log,
+	set,
+	query: { limit = 10, page = 1 },
+}: GetArtistsHandler) => {
 	try {
-		const artists = await getAllArtists(params)
+		const offset = (Number(page) - 1) * limit
+		let totalRows: number
+		let data: any
+
+		const countQuery = 'SELECT COUNT(*) AS total FROM artists'
+		const totalResult = await client.query<{ total: string }>(countQuery)
+		//@ts-ignore
+		const totalCount = Number.parseInt(totalResult?.rows[0].total, 10)
+
+		const query =
+			Number(limit) === -1
+				? 'SELECT a.first_release_year,a.no_of_albums_released,u.id,u.email,u.first_name,u.last_name,u.gender,u.role_type FROM artists a LEFT JOIN users u ON a.user_id = u.id ORDER BY a.id DESC'
+				: 'SELECT a.first_release_year,a.no_of_albums_released,u.id,u.email,u.first_name,u.last_name,u.gender,u.role_type FROM artists a LEFT JOIN users u ON a.user_id = u.id ORDER BY a.id DESC LIMIT $1 OFFSET $2'
+
+		if (Number(limit) === -1) {
+			const result = await client.query(query)
+
+			totalRows = result.rowCount as number
+			data = result.rows
+		} else {
+			const result = await client.query(query, [limit, offset])
+
+			totalRows = result.rowCount as number
+			data = result.rows
+		}
+
+		const hasNext = Number(limit) === -1 ? false : offset + totalRows < totalCount
+
+		set.status = 'OK'
 
 		return response({
+			payload: data,
 			pagination: {
-				page: artists.page,
-				hasNext: artists.hasNext,
-				count: artists.count,
+				page: Number(page),
+				hasNext,
+				count: totalRows,
+				limit: Number(limit),
+				totalRows: totalCount,
 			},
-			payload: artists.data,
 			status: 200,
 			success: true,
 			message: 'Artists fetched successfully',
@@ -77,7 +109,12 @@ export const createArtistService = async ({ body, log, set }: CreateArtistHandle
 
 		const userBody = omit(body, ['first_release_year', 'no_of_albums_released', 'user_id'])
 
-		const newUser = await createUser(userBody)
+		const hashedPassword = await hashPassword(userBody.password)
+
+		const newUser = await createUser({
+			...userBody,
+			password: hashedPassword as string,
+		})
 
 		if (newUser && newUser.rows.length === 0) {
 			set.status === 'Internal Server Error'
@@ -116,12 +153,13 @@ export const updateArtistService = async ({ body, log, set, params }: UpdateArti
 	try {
 		const userBody = omit(body, ['first_release_year', 'no_of_albums_released', 'user_id'])
 
-		const updatedUser = await updateUser(params.id, userBody)
+		await updateUser(params.id, {
+			...userBody,
 
-		if (updatedUser && updatedUser.rows.length === 0) {
-			set.status === 'Internal Server Error'
-			return internalServerErrorResponse
-		}
+			...(userBody.password && {
+				password: (await hashPassword(userBody.password as string)) as string,
+			}),
+		})
 
 		const artistBody = pick(body, ['first_release_year', 'no_of_albums_released'])
 
@@ -144,14 +182,14 @@ type DeleteArtistHandler = AppContext<{ params: { id: number } }, '/api/v1/artis
 
 export const deleteArtistService = async ({ params, log, set }: DeleteArtistHandler) => {
 	try {
-		const artist = await getArtist({ id: params.id })
+		const artist = await getArtist({ user_id: params.id })
 
 		if (artist.rowCount === 0) {
 			set.status = 'Bad Request'
 			return response({ message: 'Artist not found', status: 400, success: false })
 		}
 
-		await deleteArtist({ id: params.id })
+		await deleteArtist({ user_id: params.id })
 
 		return response({
 			payload: null,

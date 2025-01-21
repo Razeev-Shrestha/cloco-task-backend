@@ -13,21 +13,21 @@ export const getAllSongs = async ({
 	limit: number | undefined
 	condition?: Record<string, unknown>
 }) => {
-	return withPaginationSelectFromTable('songs', limit, page, condition)
+	return withPaginationSelectFromTable('musics', limit, page, condition)
 }
 
 export const getSong = async (input: Partial<SongsSchema>) => {
-	return selectFromTable<SongsSchema>('songs', input)
+	return selectFromTable<SongsSchema>('musics', input)
 }
 
 export const createSong = async (input: SongsSchema) => {
-	return insertIntoTable('songs', input)
+	return insertIntoTable('musics', input)
 }
 
 export const updateSong = async (input: Partial<SongsSchema>) => {
-	return updateIntoTable('songs', input, { title: input.title })
+	return updateIntoTable('musics', input, { title: input.title })
 }
 
 export const deleteSong = async (input: Partial<SongsSchema>) => {
-	return deleteFromTable('songs', input)
+	return deleteFromTable('musics', input)
 }

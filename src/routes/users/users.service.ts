@@ -1,6 +1,5 @@
 import type { AppContext } from '@/app.type'
 import { internalServerErrorResponse } from '@/utils/error-response'
-import { generatePassword } from '@/utils/generate-password'
 import { omit } from '@/utils/omit'
 import { hashPassword } from '@/utils/password'
 import { response } from '@/utils/response'
@@ -49,9 +48,7 @@ export const createUserService = async ({ log, body, set }: CreateUserHandler) =
 			})
 		}
 
-		const password = await generatePassword()
-
-		const hashedPassword = await hashPassword(password)
+		const hashedPassword = await hashPassword(body.password)
 
 		const newUser = await createUser({ ...body, password: hashedPassword as string })
 
@@ -93,8 +90,11 @@ export const updateUserService = async ({ body, params, set, log }: UpdateUserHa
 			})
 		}
 
+		const password = body.password ? await hashPassword(body.password) : undefined
+
 		const updatedUser = await updateUser(params.id, {
 			...body,
+			...(password ? { password } : {}),
 			updated_at: new Date().toISOString(),
 		})
 
@@ -167,7 +167,9 @@ export const getUsersService = async ({ log, set, query }: GetUsersHandler) => {
 			pagination: {
 				count: users.count,
 				hasNext: users.hasNext,
+				totalRows: users.total,
 				page: users.page,
+				limit: users.limit,
 			},
 		})
 	} catch (err) {

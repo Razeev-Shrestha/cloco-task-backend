@@ -42,3 +42,5 @@ CREATE TABLE IF NOT EXISTS musics(
 );
 ---statement breakpoint---
 CREATE INDEX idx_musics_artist_id ON musics(artist_id);
+
+-- SELECT a.first_release_year,a.no_of_albums_released,u.first_name,u.last_name,u.email,u.gender,u. FROM artists a LEFT JOIN users u ON a.user_id = u.id;

@@ -2,24 +2,31 @@ import type { AppContext } from '@/app.type'
 import type { Prettify } from '@/types/prettify'
 import { internalServerErrorResponse } from '@/utils/error-response'
 import { response } from '@/utils/response'
-import { createSong, deleteSong, getAllSongs, getSong, updateSong } from './songs.controller'
+import { createSong, deleteSong, updateSong } from './songs.controller'
 import type { SongsSchema } from './songs.schema'
+import { client } from '@/db/client'
 
 type GetSongHandler = AppContext<
-	{ params: { artist_id: number; title: string } },
-	'/api/v1/artists/:artist_id/songs/title'
+	{ params: { id: number }; query: { title: string } },
+	'/api/v1/artists/:id/song'
 >
 
-export const getSongService = async ({ params, log, set }: GetSongHandler) => {
+export const getSongService = async ({ params, log, set, query: { title } }: GetSongHandler) => {
 	try {
-		const song = await getSong({ artist_id: params.artist_id, title: params.title })
+		const song = await client.query(
+			`
+			SELECT m.title,m.genre,m.album_name,m.artist_id FROM musics m JOIN artists a ON m.artist_id = a.id JOIN users u ON a.user_id = u.id WHERE u.id = $1 AND m.title = $2
+			`,
+			[params.id, title]
+		)
 
 		if (song.rowCount === 0) {
-			set.status === 'Bad Request'
+			set.status = 'Bad Request'
 			return response({ message: 'Song not found', status: 400, success: false })
 		}
+
 		return response({
-			payload: song.rows,
+			payload: song.rows[0],
 			status: 200,
 			success: true,
 			message: 'Song fetched successfully',
@@ -32,32 +39,57 @@ export const getSongService = async ({ params, log, set }: GetSongHandler) => {
 }
 
 type GetSongsHandler = AppContext<
-	{ params: { artist_id: number }; query: { page?: number; limit?: number } },
-	'/api/v1/artists/:artist_id/songs'
+	{ params: { id: number }; query: { page?: number; limit?: number } },
+	'/api/v1/artists/:id/songs'
 >
 
-export const getSongsService = async ({ params, log, set, query }: GetSongsHandler) => {
+export const getSongsService = async ({
+	params,
+	log,
+	set,
+	query: { limit = 10, page = 1 },
+}: GetSongsHandler) => {
 	try {
-		const songs = await getAllSongs({
-			page: query.page,
-			limit: query.limit,
-			condition: { artist_id: params.artist_id },
-		})
+		const offset = (Number(page) - 1) * limit
+		let totalRows: number
+		let data: any
 
-		if (songs.data.length === 0) {
-			set.status = 'Bad Request'
-			return response({ message: 'Songs not found', status: 400, success: false })
+		const countQuery = 'SELECT COUNT(*) AS total FROM musics'
+		const totalResult = await client.query<{ total: string }>(countQuery)
+		//@ts-ignore
+		const totalCount = Number.parseInt(totalResult?.rows[0].total, 10)
+
+		const query =
+			Number(limit) === -1
+				? 'SELECT m.title,m.genre,m.album_name,m.artist_id FROM musics m JOIN artists a ON m.artist_id = a.id JOIN users u ON a.user_id = u.id WHERE u.id = $1'
+				: 'SELECT m.title,m.genre,m.album_name,m.artist_id FROM musics m JOIN artists a ON m.artist_id = a.id JOIN users u ON a.user_id = u.id WHERE u.id = $1 LIMIT $2 OFFSET $3'
+
+		if (Number(limit) === -1) {
+			const result = await client.query(query, [params.id])
+
+			totalRows = result.rowCount as number
+			data = result.rows
+		} else {
+			const result = await client.query(query, [params.id, limit, offset])
+
+			totalRows = result.rowCount as number
+			data = result.rows
 		}
+		const hasNext = Number(limit) === -1 ? false : offset + totalRows < totalCount
+
+		set.status = 'OK'
 		return response({
-			pagination: {
-				page: songs.page,
-				count: songs.count,
-				hasNext: songs.hasNext,
-			},
-			payload: songs.data,
+			payload: data,
+			message: 'Songs fetched successfully',
 			status: 200,
 			success: true,
-			message: 'Songs fetched successfully',
+			pagination: {
+				totalRows: totalCount,
+				count: totalRows,
+				hasNext,
+				limit: Number(limit),
+				page: Number(page),
+			},
 		})
 	} catch (err) {
 		log.error(err)
@@ -67,20 +99,18 @@ export const getSongsService = async ({ params, log, set, query }: GetSongsHandl
 }
 
 type CreateSongHandler = AppContext<
-	{ body: Prettify<Omit<SongsSchema, 'artist_id'>>; params: { artist_id: number } },
-	'/api/v1/artists/:artist_id/songs'
+	{ body: Prettify<Omit<SongsSchema, 'artist_id'>>; params: { id: number } },
+	'/api/v1/artists/:id/songs'
 >
 
 export const createSongService = async ({ body, params, log, set }: CreateSongHandler) => {
 	try {
-		const song = await getSong({ artist_id: params.artist_id, title: body.title })
+		const artist = await client.query(
+			'SELECT a.id FROM  artists a LEFT JOIN  users u ON a.user_id = a.id WHERE a.user_id = $1',
+			[params.id]
+		)
 
-		if (song.rowCount !== 0) {
-			set.status = 'Bad Request'
-			return response({ message: 'Song already exists', status: 400, success: false })
-		}
-
-		const newSong = await createSong({ ...body, artist_id: params.artist_id })
+		const newSong = await createSong({ ...body, artist_id: artist.rows[0].id })
 
 		return response({
 			payload: newSong.rows,
@@ -98,7 +128,7 @@ export const createSongService = async ({ body, params, log, set }: CreateSongHa
 type UpdateSongHandler = AppContext<
 	{
 		body: Prettify<Partial<Omit<SongsSchema, 'artist_id'>>>
-		params: { artist_id: number }
+		params: { id: number }
 		query: { title: string }
 	},
 	'/api/v1/artists/:artist_id/songs'
@@ -106,14 +136,19 @@ type UpdateSongHandler = AppContext<
 
 export const updateSongService = async ({ body, params, log, set, query }: UpdateSongHandler) => {
 	try {
-		const song = await getSong({ artist_id: params.artist_id, title: query.title })
+		const artist = await client.query(
+			`
+			SELECT a.id FROM artists a LEFT JOIN users u ON a.user_id = u.id WHERE u.id = $1
+			`,
+			[params.id]
+		)
 
-		if (song.rowCount === 0) {
-			set.status = 'Bad Request'
-			return response({ message: 'Song not found', status: 400, success: false })
-		}
-
-		const updatedSong = await updateSong({ ...body, artist_id: params.artist_id })
+		const updatedSong = await updateSong({
+			...body,
+			artist_id: artist.rows[0].id,
+			title: query.title,
+			updated_at: new Date().toISOString(),
+		})
 
 		return response({
 			payload: updatedSong.rows,
@@ -129,20 +164,20 @@ export const updateSongService = async ({ body, params, log, set, query }: Updat
 }
 
 type DeleteSongHandler = AppContext<
-	{ params: { artist_id: number }; query: { title: string } },
+	{ params: { id: number }; query: { title: string } },
 	'/api/v1/artists/:artist_id/songs?title='
 >
 
 export const deleteSongService = async ({ params, log, set, query }: DeleteSongHandler) => {
 	try {
-		const song = await getSong({ artist_id: params.artist_id, title: query.title })
+		const artist = await client.query(
+			`
+			SELECT a.id FROM artists a LEFT JOIN users u ON a.user_id = u.id WHERE u.id = $1
+			`,
+			[params.id]
+		)
 
-		if (song.rowCount === 0) {
-			set.status = 'Bad Request'
-			return response({ message: 'Song not found', status: 400, success: false })
-		}
-
-		await deleteSong({ artist_id: params.artist_id, title: query.title })
+		await deleteSong({ artist_id: artist.rows[0].id, title: query.title })
 
 		return response({
 			status: 204,

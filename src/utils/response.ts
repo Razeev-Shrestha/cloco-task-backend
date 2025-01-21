@@ -11,6 +11,8 @@ type PaginationType = {
 	count: number
 	hasNext: boolean
 	page: number
+	totalRows: number
+	limit: number
 }
 
 type IResponse<T> = SuccessResponse<T> | ErrorResponse<T>

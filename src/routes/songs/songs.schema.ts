@@ -2,7 +2,7 @@ import { type Static, t } from 'elysia'
 
 export const songsSchema = t.Object(
 	{
-		artist_id: t.Number({ description: 'Artist ID of the song.' }),
+		artist_id: t.Optional(t.Number({ description: 'Artist ID of the song.' })),
 		title: t.String({ minLength: 3, maxLength: 255, description: 'Title of the song.' }),
 		album_name: t.String({
 			minLength: 3,

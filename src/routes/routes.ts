@@ -2,7 +2,7 @@ import type { Decorator, Derive, Resolve, Store } from '@/app.type'
 import { authPlugin } from '@/plugins/auth.plugin'
 import { makeSchemaOptional } from '@/utils/make-schema-optional'
 import { response } from '@/utils/response'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
 import { artistsSchema } from './artists/artists.schema'
 import {
 	createArtistService,
@@ -28,6 +28,8 @@ import {
 	getUsersService,
 	updateUserService,
 } from './users/users.service'
+import { mergeSchemas } from '@/utils/merge-schema'
+import { songsSchema } from './songs/songs.schema'
 
 export const routes = new Elysia<
 	'/api/v1',
@@ -129,12 +131,22 @@ export const routes = new Elysia<
 			})
 			.delete('/:id', deleteUserService, {
 				tags: ['Users'],
+
 				detail: {
 					tags: ['Users'],
 					summary: 'Delete User',
 					description: 'Delete User',
 				},
+
 				authorizedRoles: ['super_admin'],
+				params: t.Object({
+					id: t.Number(),
+				}),
+				transform({ params }) {
+					const id = +params.id
+
+					if (!Number.isNaN(id)) params.id = id
+				},
 			})
 	)
 	.group('/artists', app =>
@@ -158,7 +170,7 @@ export const routes = new Elysia<
 				authorizedRoles: ['super_admin', 'artist_manager'],
 			})
 			.post('', createArtistService, {
-				body: artistsSchema,
+				body: mergeSchemas(artistsSchema, usersSchema),
 				tags: ['Artists'],
 				detail: {
 					tags: ['Artists'],
@@ -168,7 +180,7 @@ export const routes = new Elysia<
 				authorizedRoles: ['artist_manager'],
 			})
 			.patch('/:id', updateArtistService, {
-				body: artistsSchema,
+				body: makeSchemaOptional(mergeSchemas(artistsSchema, usersSchema)),
 				tags: ['Artists'],
 				detail: {
 					tags: ['Artists'],
@@ -195,7 +207,7 @@ export const routes = new Elysia<
 				},
 				authorizedRoles: ['super_admin', 'artist_manager', 'artist'],
 			})
-			.get('/:id/songs/:title', getSongService, {
+			.get('/:id/song', getSongService, {
 				tags: ['Songs'],
 				detail: {
 					tags: ['Songs'],
@@ -205,7 +217,7 @@ export const routes = new Elysia<
 				authorizedRoles: ['super_admin', 'artist_manager', 'artist'],
 			})
 			.post('/:id/songs', createSongService, {
-				body: artistsSchema,
+				body: songsSchema,
 				tags: ['Songs'],
 				detail: {
 					tags: ['Songs'],
@@ -214,8 +226,8 @@ export const routes = new Elysia<
 				},
 				authorizedRoles: ['artist'],
 			})
-			.patch('/:id/songs/:title', updateSongService, {
-				body: artistsSchema,
+			.patch('/:id/song', updateSongService, {
+				body: makeSchemaOptional(songsSchema),
 				tags: ['Songs'],
 				detail: {
 					tags: ['Songs'],
@@ -224,7 +236,7 @@ export const routes = new Elysia<
 				},
 				authorizedRoles: ['artist'],
 			})
-			.delete('/:id/songs/:title', deleteSongService, {
+			.delete('/:id/song', deleteSongService, {
 				tags: ['Songs'],
 				detail: {
 					tags: ['Songs'],

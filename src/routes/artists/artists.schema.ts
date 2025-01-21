@@ -3,7 +3,7 @@ import { type Static, t } from 'elysia'
 export const artistsSchema = t.Object(
 	{
 		id: t.Optional(t.Number()),
-		user_id: t.Number({ description: 'User ID of the artist.' }),
+		user_id: t.Optional(t.Number({ description: 'User ID of the artist.' })),
 		first_release_year: t.Number({ description: 'First release year of the artist.' }),
 		no_of_albums_released: t.Number({ description: 'Number of albums released by the artist.' }),
 		created_at: t.Optional(t.String({ format: 'date-time' })),

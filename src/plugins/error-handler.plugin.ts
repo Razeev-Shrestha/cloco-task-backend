@@ -6,17 +6,17 @@ import { logger } from './logger.plugin'
 export const errorHandlerPlugin = new Elysia().onError({ as: 'global' }, ({ code, set, error }) => {
 	switch (code) {
 		case 'NOT_FOUND':
-			set.status === 'Not Found'
+			set.status = 'Not Found'
 			logger.error(error)
 
 			return notFoundErrorResponse
 		case 'INTERNAL_SERVER_ERROR':
-			set.status === 'Internal Server Error'
+			set.status = 'Internal Server Error'
 			logger.error(error)
 
 			return internalServerErrorResponse
 		case 'VALIDATION': {
-			set.status === 'Unprocessable Content'
+			set.status = 'Unprocessable Content'
 			logger.error(error)
 
 			const errors = error.all.map(err => {
@@ -40,7 +40,8 @@ export const errorHandlerPlugin = new Elysia().onError({ as: 'global' }, ({ code
 			})
 		}
 		default:
-			set.status === 'Internal Server Error'
+			logger.info('Error code not found')
+			set.status = 'Internal Server Error'
 			logger.error(error)
 
 			return internalServerErrorResponse
