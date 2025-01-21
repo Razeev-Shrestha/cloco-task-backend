@@ -1,0 +1,28 @@
+{
+	"$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+	"version": "0.2",
+	"ignorePaths": [
+		"node_modules/",
+		".husky/",
+		".git",
+		"biome.json",
+		"bun.lock",
+		"cspell.json",
+		".vscode",
+		".idea",
+		"build"
+	],
+	"words": [
+		"bogeychan",
+		"cloco",
+		"commitlint",
+		"Elysia",
+		"elysiajs",
+		"papaparse",
+		"Rajeev",
+		"Shrestha",
+		"TIMESTAMPZ",
+		"typebox",
+		"unparse"
+	]
+}

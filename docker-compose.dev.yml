@@ -1,0 +1,42 @@
+services:
+   app:
+      build:
+         context: .
+         dockerfile: Dockerfile.dev
+      ports:
+         - "${PORT}:${PORT}"
+      environment:
+         - CI=true
+      develop:
+        watch:
+         - action: sync
+           path: ./src
+           target: /app/src
+           ignore:
+             - .git/
+             - node_modules/
+             - .vscode/
+             - .idea/
+             - .husky/
+         - action: rebuild
+           path: package.json
+         - action: rebuild
+           path: .env.development
+      depends_on:
+         - database
+   database:
+      image: postgres:16.6
+      environment:
+         POSTGRES_DB: ${POSTGRES_DB}
+         POSTGRES_USER: ${POSTGRES_USER}
+         POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ports:
+        - "${POSTGRES_PORT}:5432"
+      volumes:
+        - postgres_data:/var/lig/postgresql/data
+
+volumes:
+   postgres_data:
+
+networks:
+  cloco-network:
